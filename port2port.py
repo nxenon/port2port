@@ -1,7 +1,7 @@
 import socket
 from argparse import ArgumentParser
 from threading import Thread
-
+from time import sleep
 
 class Port2Port:
 
@@ -10,6 +10,7 @@ class Port2Port:
         self.remote_port = int(remote_port)
         self.listen_ip = listen_ip
         self.remote_ip = remote_ip
+        self.is_socket_closed = True
 
     def start(self):
 
@@ -17,16 +18,24 @@ class Port2Port:
         print(f'remote ip : {self.remote_ip} remote port : {self.remote_port}')
 
         while True:
-            self.start_listening()
+            if self.is_socket_closed :
+                self.start_listening()
 
     def start_listening(self):
         '''
         this function starts listening on a port ,for forwarding
         '''
 
-        self.client_socket = socket.socket(socket.AF_INET ,socket.SOCK_STREAM)
-        self.client_socket.bind((self.listen_ip ,self.listen_port))
-        self.client_socket.listen(5)
+        try :
+            self.client_socket = socket.socket(socket.AF_INET ,socket.SOCK_STREAM)
+            self.client_socket.bind((self.listen_ip ,self.listen_port))
+            self.client_socket.listen(1)
+        except Exception as e :
+            print(f'Error --> {e}')
+            self.is_socket_closed = True
+            return
+        else:
+            self.is_socket_closed = False
 
         try :
             print('Listening for accepting connections ...')
@@ -62,6 +71,7 @@ class Port2Port:
             while True :
                 client_data = self.client_conn.recv(4096)
                 if not client_data :
+                    self.close_both_connection()
                     break
                 self.remote_socket.sendall(client_data)
 
@@ -74,6 +84,7 @@ class Port2Port:
             while True :
                 remote_data = self.remote_socket.recv(4096)
                 if not remote_data :
+                    self.close_both_connection()
                     break
                 self.client_conn.sendall(remote_data)
 
@@ -86,6 +97,7 @@ class Port2Port:
             self.client_conn.close()
             self.remote_socket.close()
             self.client_socket.close()
+            self.is_socket_closed = True
 
         except Exception as e:
             print(f'Error --> {e}')
