@@ -12,6 +12,10 @@ class Port2Port:
         self.remote_ip = remote_ip
 
     def start(self):
+
+        print(f'listen ip : {self.listen_ip} listen port : {self.listen_port}')
+        print(f'remote ip : {self.remote_ip} remote port : {self.remote_port}')
+
         while True:
             self.start_listening()
 
@@ -22,15 +26,16 @@ class Port2Port:
 
         self.client_socket = socket.socket(socket.AF_INET ,socket.SOCK_STREAM)
         self.client_socket.bind((self.listen_ip ,self.listen_port))
-        self.client_socket.listen(1)
+        self.client_socket.listen(5)
 
         try :
-            print('listening for accepting connections ...')
+            print('Listening for accepting connections ...')
             self.client_conn ,addr = self.client_socket.accept()
+            print(f'client connected : {addr[0]}')
 
         except Exception as e :
             print(f'Error --> {e}')
-            exit()
+            self.close_both_connection()
 
         else:
             self.connect_to_remote_socket()
@@ -46,7 +51,7 @@ class Port2Port:
 
         except Exception as e:
             print(f'Error --> {e}')
-            exit()
+            self.close_both_connection()
 
         else:
             Thread(target=self.forward_to_remote_port).start()
@@ -62,7 +67,7 @@ class Port2Port:
 
         except Exception as e:
             print(f'Error --> {e}')
-            exit()
+            self.close_both_connection()
 
     def forward_from_remote_port(self):
         try :
@@ -74,7 +79,14 @@ class Port2Port:
 
         except Exception as e:
             print(f'Error --> {e}')
-            exit()
+            self.close_both_connection()
+
+    def close_both_connection(self):
+        try :
+            self.client_conn.close()
+            self.remote_socket.close()
+        except Exception as e:
+            print(f'Error --> {e}')
 
 def print_help():
     help_msg = '''
