@@ -85,6 +85,8 @@ class Port2Port:
         try :
             self.client_conn.close()
             self.remote_socket.close()
+            self.client_socket.close()
+
         except Exception as e:
             print(f'Error --> {e}')
 
