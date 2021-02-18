@@ -1,6 +1,8 @@
 import socket
 from argparse import ArgumentParser
 from threading import Thread
+import os
+from time import sleep
 
 class Port2Port:
 
@@ -13,6 +15,7 @@ class Port2Port:
         if self.service :
             self.service = self.service.lower()
         self.is_socket_closed = True
+        self.pid = os.getpid() # use pid for kill the process
 
     def start(self):
 
@@ -22,6 +25,13 @@ class Port2Port:
         while True:
             if self.is_socket_closed :
                 self.start_listening()
+                Thread(target=self.start_accepting).start()
+                # handling Ctrl-C
+                try:
+                    while True :
+                        sleep(10)
+                except KeyboardInterrupt :
+                    os.kill(self.pid,9)
 
     def start_listening(self):
         '''
@@ -38,6 +48,8 @@ class Port2Port:
             return
         else:
             self.is_socket_closed = False
+
+    def start_accepting(self):
 
         try :
             print('Listening for accepting connections ...')
